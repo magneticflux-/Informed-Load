@@ -3,11 +3,14 @@ package io.github.giantnuker.fabric.informedload.mixin;
 import io.github.giantnuker.fabric.informedload.IProgressTracker;
 import io.github.giantnuker.fabric.informedload.IProgressLogger;
 import io.github.giantnuker.fabric.informedload.InformedLoadUtils;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.screen.LevelLoadingScreen;
 import net.minecraft.client.gui.WorldGenerationProgressTracker;
 import net.minecraft.server.WorldGenerationProgressLogger;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.ChunkStatus;
+import net.minecraft.world.chunk.WorldChunk;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -35,6 +38,10 @@ public class MixinWorldGenProgress  {
                     //fill(int_16, int_17, int_16 + InformedLoad.WorldGen.int_3, int_17 + InformedLoad.WorldGen.int_3, Color.RED.getRGB());
                     if (chunkStatus_1 != null && x >= int_16 && x <= int_16 + InformedLoadUtils.WorldGen.int_3 && y >= int_17 && y <= int_17 + InformedLoadUtils.WorldGen.int_3) {
                         ((LevelLoadingScreen)(Object)this).renderTooltip("Step: " + InformedLoadUtils.STATUS_TO_NAME.get(chunkStatus_1), x, y);
+                        ChunkPos spawnPos = ((IProgressTracker)progressProvider).getSpawnPos();
+                        System.out.println("World: " + InformedLoadUtils.loadingWorld);
+                        //WorldChunk chunk = InformedLoadUtils.loadingWorld.getChunk(int_14 - spawnPos.x, int_15 - spawnPos.z);
+                        //System.out.println("Chunk: " + chunk);
                     }
                 }
             }
@@ -66,7 +73,7 @@ public class MixinWorldGenProgress  {
             InformedLoadUtils.WorldGen.int_11 = y - InformedLoadUtils.WorldGen.int_9 / 2;
             InformedLoadUtils.WorldGen.int_12 = InformedLoadUtils.WorldGen.int_7 / 2 + 1;
             InformedLoadUtils.WorldGen.int_13 = -16772609;
-            InformedLoadUtils.drawChunkMap(worldGenerationProgressTracker_1, x, y, scale, int_4, InformedLoadUtils.config.worldload_loveDisplay.simplifyColors);
+            InformedLoadUtils.drawChunkMap(worldGenerationProgressTracker_1, x, y, scale);
         } else {
             IProgressTracker progressTracker = ((IProgressTracker)((Object)worldGenerationProgressTracker_1));
             WorldGenerationProgressLogger progressLogger = progressTracker.getProgressLogger();

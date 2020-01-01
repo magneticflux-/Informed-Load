@@ -1,16 +1,27 @@
 package io.github.giantnuker.fabric.informedload;
 
 
+import com.mojang.blaze3d.platform.GlStateManager;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.FabricLoader;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.MaterialColor;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.WorldGenerationProgressTracker;
 import net.minecraft.client.texture.TextureManager;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Util;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.BlockView;
+import net.minecraft.world.Heightmap;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
+import net.minecraft.world.chunk.WorldChunk;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.Message;
@@ -105,20 +116,20 @@ public class InformedLoadUtils implements ModInitializer {
     @Override
     public void onInitialize() {
         STATUS_TO_COLOR = (Object2IntMap) Util.make(new Object2IntOpenHashMap(), (map) -> {
-            map.defaultReturnValue(0);
-            map.put(ChunkStatus.EMPTY, 5526612);
-            map.put(ChunkStatus.STRUCTURE_STARTS, 10066329);
-            map.put(ChunkStatus.STRUCTURE_REFERENCES, 6250897);
-            map.put(ChunkStatus.BIOMES, 8434258);
-            map.put(ChunkStatus.NOISE, 13750737);
-            map.put(ChunkStatus.SURFACE, 7497737);
-            map.put(ChunkStatus.CARVERS, 7169628);
-            map.put(ChunkStatus.LIQUID_CARVERS, 3159410);
-            map.put(ChunkStatus.FEATURES, 2213376);
-            map.put(ChunkStatus.LIGHT, 13421772);
-            map.put(ChunkStatus.SPAWN, 15884384);
-            map.put(ChunkStatus.HEIGHTMAPS, 15658734);
-            map.put(ChunkStatus.FULL, 16777215);
+            map.defaultReturnValue(0xFF000000);
+            map.put(ChunkStatus.EMPTY, 0xFF000000);
+            map.put(ChunkStatus.STRUCTURE_STARTS, 0xEE000000);
+            map.put(ChunkStatus.STRUCTURE_REFERENCES, 0xE0000000);
+            map.put(ChunkStatus.BIOMES, 0xDD000000);
+            map.put(ChunkStatus.NOISE, 0xD0000000);
+            map.put(ChunkStatus.SURFACE, 0xBB000000);
+            map.put(ChunkStatus.CARVERS, 0xB0000000);
+            map.put(ChunkStatus.LIQUID_CARVERS, 0xB0000000);
+            map.put(ChunkStatus.FEATURES, 0xA0000000);
+            map.put(ChunkStatus.LIGHT, 0x80000000);
+            map.put(ChunkStatus.SPAWN, 0x30000000);
+            map.put(ChunkStatus.HEIGHTMAPS, 0x25000000);
+            map.put(ChunkStatus.FULL, 0x00000000);
         });
         STATUS_TO_NAME = Util.make(new HashMap(), (map) -> {
             map.put(ChunkStatus.EMPTY, "Empty");
@@ -139,32 +150,56 @@ public class InformedLoadUtils implements ModInitializer {
     public static int spritesToLoad;
     public static Object2IntMap<ChunkStatus> STATUS_TO_COLOR;
     public static HashMap<ChunkStatus, String> STATUS_TO_NAME;
-    public static void drawChunkMap(WorldGenerationProgressTracker worldGenerationProgressTracker_1, int int_1, int int_2, int int_3, int int_4, boolean simplified) {
-        int int_5 = int_3 + int_4;
-        int int_6 = worldGenerationProgressTracker_1.getCenterSize();
-        int int_7 = int_6 * int_5 - int_4;
-        int int_8 = worldGenerationProgressTracker_1.getSize();
-        int int_9 = int_8 * int_5 - int_4;
-        int int_10 = int_1 - int_9 / 2;
-        int int_11 = int_2 - int_9 / 2;
-        int int_12 = int_7 / 2 + 1;
-        int int_13 = -16772609;
-        if (int_4 != 0) {
-            fill(int_1 - int_12, int_2 - int_12, int_1 - int_12 + 1, int_2 + int_12, -16772609);
-            fill(int_1 + int_12 - 1, int_2 - int_12, int_1 + int_12, int_2 + int_12, -16772609);
-            fill(int_1 - int_12, int_2 - int_12, int_1 + int_12, int_2 - int_12 + 1, -16772609);
-            fill(int_1 - int_12, int_2 + int_12 - 1, int_1 + int_12, int_2 + int_12, -16772609);
-        }
+    public static void drawChunkMap(WorldGenerationProgressTracker progressProvider, int centerX, int centerY, int chunkSize) {
+        int gridSize = progressProvider.getSize();
 
-        for(int int_14 = 0; int_14 < int_8; ++int_14) {
-            for(int int_15 = 0; int_15 < int_8; ++int_15) {
-                ChunkStatus chunkStatus_1 = worldGenerationProgressTracker_1.getChunkStatus(int_14, int_15);
-                int int_16 = int_10 + int_14 * int_5;
-                int int_17 = int_11 + int_15 * int_5;
-                fill(int_16, int_17, int_16 + int_3, int_17 + int_3, (STATUS_TO_COLOR).getInt(chunkStatus_1) | -16777216);
+        int totalSize = gridSize * chunkSize;
+        int minX = centerX - totalSize / 2;
+        int minY = centerY - totalSize / 2;
+        minX *= 16;
+        minY *= 16;
+
+        chunkSize *= 16;
+        GlStateManager.pushMatrix();
+        GlStateManager.scalef(1f / 16f, 1f / 16f, 1f / 16f);
+        for(int gridX = 0; gridX < gridSize; ++gridX) {
+            for(int gridY = 0; gridY < gridSize; ++gridY) {
+                int radius = ((IProgressTracker)progressProvider).getRadius();
+                ChunkPos spawnPos = ((IProgressTracker)progressProvider).getSpawnPos();
+                //ChunkPos.toLong(x + this.spawnPos.x - this.radius, z + this.spawnPos.z - this.radius)
+                int chunkX = gridX + spawnPos.x - radius;
+                int chunkZ = gridY + spawnPos.z - radius;
+                ChunkStatus chunkStatus = ((IProgressTracker)progressProvider).getChunkStatuses().get(ChunkPos.toLong(chunkX, chunkZ));
+                Chunk chunk = chunkStatus != null && chunkStatus.getIndex() >= ChunkStatus.SURFACE.getIndex() ? InformedLoadUtils.loadingWorld == null ? null : InformedLoadUtils.loadingWorld.getChunk(chunkX, chunkZ, ChunkStatus.EMPTY, false) : null;
+                int dispX = minX + gridX * chunkSize;
+                int dispY = minY + gridY * chunkSize;
+                if (chunk == null) {
+                    fill(dispX, dispY, dispX + chunkSize, dispY + chunkSize, 0xFFFFFFFF);
+                    fill(dispX, dispY, dispX + chunkSize, dispY + chunkSize, STATUS_TO_COLOR.getInt(chunkStatus));
+                } else {
+                    BlockState blockState;
+                    MaterialColor color = null;
+                    for (int x = 0; x < 16; x += 4) {
+                        for (int z = 0; z < 16; z += 4) {
+                            int aa = chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE, x, z) + 1;
+                            do {
+                                --aa;
+                                blockState = chunk.getBlockState(new BlockPos(x, aa, z));
+                                color = blockState.getTopMaterialColor(InformedLoadUtils.loadingWorld, new BlockPos(chunk.getPos().getStartX() + x, aa, chunk.getPos().getStartZ() + z));
+                            } while (blockState.isAir() && aa > 0);
+                            int c1 = color.getRenderColor(2);
+                            int newc = (((c1 >> 0) & 0xFF) << 16) | (((c1 >> 8) & 0xFF) << 8) | (((c1 >> 16) & 0xFF) << 0) | 0xFF000000;
+
+                            fill(dispX + (int)(chunkSize / (16f / x)), dispY + (int)(chunkSize / (16f / z)), dispX + chunkSize, dispY + chunkSize, newc);
+                        }
+                    }
+                    if (chunkStatus != ChunkStatus.FULL) {
+                        fill(dispX, dispY, dispX + chunkSize, dispY + chunkSize, STATUS_TO_COLOR.getInt(chunkStatus));
+                    }
+                }
             }
         }
-
+        GlStateManager.popMatrix();
     }
     public static class WorldGen {
         public static int int_3 = 0;
@@ -201,4 +236,5 @@ public class InformedLoadUtils implements ModInitializer {
             throw exception;
         }
     }
+    public static ServerWorld loadingWorld = null;
 }
