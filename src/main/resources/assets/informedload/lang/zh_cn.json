@@ -1,0 +1,17 @@
+{
+    "text.autoconfig.informedload.title": "加载信息配置",
+    "text.autoconfig.informedload.category.splash": "启动界面",
+    "text.autoconfig.informedload.option.splash_multicoloredProgressBars": "多种颜色的进度条",
+    "text.autoconfig.informedload.option.splash_splitProgressBars": "分割进度条",
+    "text.autoconfig.informedload.option.splash_maxProgressBarRows": "显示最大进度条",
+    "text.autoconfig.informedload.option.splash_forceVanillaProgressBars": "强制原版进度条",
+    "text.autoconfig.informedload.category.worldload": "世界加载显示",
+    "text.autoconfig.informedload.option.worldload_loveDisplay": "我爱加载框",
+    "text.autoconfig.informedload.option.worldload_hateDisplay": "我讨厌加载框",
+    "text.autoconfig.informedload.option.worldload_loveDisplay.bigChunkViewer": "更大的区块加载显示",
+    "text.autoconfig.informedload.option.worldload_loveDisplay.showProgressBar": "显示进度条",
+    "text.autoconfig.informedload.option.worldload_hateDisplay.progressBarDisplay": "改用进度条",
+    "text.autoconfig.informedload.option.worldload_loveDisplay.simplifyColors": "使显示更易于阅读",
+    "text.autoconfig.informedload.option.entrypointDisplay": "显示入口加载",
+    "text.autoconfig.informedload.option.printEntrypoints": "日志入口 (调试)"
+}
