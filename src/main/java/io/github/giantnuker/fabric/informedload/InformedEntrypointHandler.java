@@ -19,10 +19,7 @@ import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.resource.language.LanguageManager;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.client.util.WindowProvider;
-import net.minecraft.resource.ReloadableResourceManagerImpl;
-import net.minecraft.resource.ResourcePack;
-import net.minecraft.resource.ResourcePackProfile;
-import net.minecraft.resource.ResourceType;
+import net.minecraft.resource.*;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
 
@@ -42,11 +39,11 @@ public class InformedEntrypointHandler implements EntrypointHandler {
     public void beforeModsLoaded() {
         /*if (InformedLoadUtils.config.entrypointDisplay) {
             InformedLoadUtils.isDoingEarlyLoad = true;
-            RenderSystem.setupDefaultState(0, 0, this.window.getFramebufferWidth(), this.window.getFramebufferHeight());
+            RenderSystem.setupDefaultState(0, 0, MinecraftClient.getInstance().getWindow().getFramebufferWidth(), MinecraftClient.getInstance().getWindow().getFramebufferHeight());
 
             ReloadableResourceManagerImpl resourceManager = (ReloadableResourceManagerImpl) this.resourceManager;
-            resourcePackManager.scanPacks();
-            List<ResourcePack> list = resourcePackManager.getEnabledProfiles().stream().map(ResourcePackProfile::createResourcePack).collect(Collectors.toList());
+            mc.getResourcePackManager().scanPacks();
+            List<ResourcePack> list = mc.getResourcePackManager().getEnabledProfiles().stream().map(ResourcePackProfile::createResourcePack).collect(Collectors.toList());
             for (ResourcePack resourcePack_1 : list) {
                 resourceManager.addPack(resourcePack_1);
             }
@@ -56,11 +53,11 @@ public class InformedEntrypointHandler implements EntrypointHandler {
             languageManager.reloadResources(list);
             InformedLoadUtils.textureManager = new TextureManager(resourceManager);
 
-            int i = this.window.calculateScaleFactor(options.guiScale, this.forcesUnicodeFont());
-            this.window.setScaleFactor((double)i);
+            int i = MinecraftClient.getInstance().getWindow().calculateScaleFactor(options.guiScale, this.forcesUnicodeFont());
+            MinecraftClient.getInstance().getWindow().setScaleFactor((double)i);
 
             Framebuffer framebuffer = this.getFramebuffer();
-            framebuffer.resize(this.window.getFramebufferWidth(), this.window.getFramebufferHeight(), IS_SYSTEM_MAC);
+            framebuffer.resize(MinecraftClient.getInstance().getWindow().getFramebufferWidth(), MinecraftClient.getInstance().getWindow().getFramebufferHeight(), IS_SYSTEM_MAC);
 
             FontManager fontManager = new FontManager(InformedLoadUtils.textureManager, forcesUnicodeFont());
             resourceManager.registerListener(fontManager.getResourceReloadListener());
@@ -72,6 +69,7 @@ public class InformedEntrypointHandler implements EntrypointHandler {
             Modloader.getInstance(runDirectory).loadMods(InformedLoadUtils.textureManager, window);
         }*/
         try {
+            // Window creation and init
             MinecraftClientAccessor mc = ((MinecraftClientAccessor) (Object) MinecraftClient.getInstance());
             Field modifiersField = Field.class.getDeclaredField("modifiers");
             modifiersField.setAccessible(true);
@@ -104,15 +102,47 @@ public class InformedEntrypointHandler implements EntrypointHandler {
 
             MinecraftClient.getInstance().getWindow().setFramerateLimit(options.maxFps);
             //this.mouse = new Mouse(this);
-            //this.mouse.setup(this.window.getHandle());
+            //this.mouse.setup(MinecraftClient.getInstance().getWindow().getHandle());
             //this.keyboard = new Keyboard(this);
-            //this.keyboard.setup(this.window.getHandle());
+            //this.keyboard.setup(MinecraftClient.getInstance().getWindow().getHandle());
             RenderSystem.initRenderer(options.glDebugVerbosity, false);
             Field framebufferField = MinecraftClient.class.getDeclaredField("framebuffer");
             modifiersField.setInt(framebufferField, framebufferField.getModifiers() & ~Modifier.FINAL);
             framebufferField.setAccessible(true);
             framebufferField.set(MinecraftClient.getInstance(), new Framebuffer(MinecraftClient.getInstance().getWindow().getFramebufferWidth(), MinecraftClient.getInstance().getWindow().getFramebufferHeight(), true, IS_SYSTEM_MAC));
             mc.getFramebuffer().setClearColor(0.0F, 0.0F, 0.0F, 0.0F);
+
+            InformedLoadUtils.isDoingEarlyLoad = true;
+            RenderSystem.setupDefaultState(0, 0, MinecraftClient.getInstance().getWindow().getFramebufferWidth(), MinecraftClient.getInstance().getWindow().getFramebufferHeight());
+            
+            
+            // Setup Informed Load hooks
+            ReloadableResourceManagerImpl resourceManager = new ReloadableResourceManagerImpl(ResourceType.CLIENT_RESOURCES, mc.getThread());
+            options.addResourcePackProfilesToManager(mc.getResourcePackManager());
+            mc.getResourcePackManager().scanPacks();
+
+            List<ResourcePack> list = mc.getResourcePackManager().getEnabledProfiles().stream().map(ResourcePackProfile::createResourcePack).collect(Collectors.toList());
+            for (ResourcePack resourcePack_1 : list) {
+                resourceManager.addPack(resourcePack_1);
+            }
+
+            LanguageManager languageManager = new LanguageManager(options.language);
+            resourceManager.registerListener(languageManager);
+            languageManager.reloadResources(list);
+            InformedLoadUtils.textureManager = new TextureManager(resourceManager);
+
+            int i = MinecraftClient.getInstance().getWindow().calculateScaleFactor(options.guiScale, options.forceUnicodeFont);
+            MinecraftClient.getInstance().getWindow().setScaleFactor((double)i);
+
+            Framebuffer framebuffer = mc.getFramebuffer();
+            framebuffer.resize(MinecraftClient.getInstance().getWindow().getFramebufferWidth(), MinecraftClient.getInstance().getWindow().getFramebufferHeight(), IS_SYSTEM_MAC);
+
+            FontManager fontManager = new FontManager(InformedLoadUtils.textureManager, options.forceUnicodeFont);
+            resourceManager.registerListener(fontManager.getResourceReloadListener());
+
+            final FontStorage fontStorage_1 = new FontStorage(InformedLoadUtils.textureManager, new Identifier("loading"));
+            fontStorage_1.setFonts(Collections.singletonList(FontType.BITMAP.createLoader(new JsonParser().parse(InformedLoadUtils.FONT_JSON).getAsJsonObject()).load(resourceManager)));
+            InformedLoadUtils.textRenderer = new TextRenderer(InformedLoadUtils.textureManager, fontStorage_1);
         } catch (Throwable t) {
             throw new RuntimeException(t);
         }

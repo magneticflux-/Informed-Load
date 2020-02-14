@@ -5,8 +5,11 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.Mouse;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.resource.ClientBuiltinResourcePackProvider;
+import net.minecraft.client.resource.ClientResourcePackProfile;
 import net.minecraft.client.util.Window;
 import net.minecraft.client.util.WindowProvider;
+import net.minecraft.resource.ReloadableResourceManager;
+import net.minecraft.resource.ResourcePackManager;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -47,4 +50,11 @@ public interface MinecraftClientAccessor {
 
     @Accessor("framebuffer")
     Framebuffer getFramebuffer();
+
+    @Accessor("resourcePackManager")
+    ResourcePackManager<ClientResourcePackProfile> getResourcePackManager();
+
+    @Accessor("thread")
+    Thread getThread();
+
 }
