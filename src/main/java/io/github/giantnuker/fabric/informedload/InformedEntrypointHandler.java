@@ -1,9 +1,13 @@
 package io.github.giantnuker.fabric.informedload;
 
 import com.google.gson.JsonParser;
+import com.mojang.blaze3d.platform.GLX;
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import io.github.giantnuker.fabric.informedload.api.ProgressBar;
 import io.github.giantnuker.fabric.informedload.mixin.MinecraftClientAccessor;
 import io.github.giantnuker.fabric.informedload.mixin.MixinMinecraftClient;
+import io.github.giantnuker.fabric.loadcatcher.EntrypointCatcher;
 import io.github.giantnuker.fabric.loadcatcher.EntrypointHandler;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.ModContainer;
@@ -15,6 +19,7 @@ import net.minecraft.client.font.FontStorage;
 import net.minecraft.client.font.FontType;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gl.Framebuffer;
+import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.resource.language.LanguageManager;
 import net.minecraft.client.texture.TextureManager;
@@ -23,51 +28,24 @@ import net.minecraft.resource.*;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static net.minecraft.client.MinecraftClient.IS_SYSTEM_MAC;
+import static org.lwjgl.glfw.GLFW.glfwPollEvents;
+import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
 
 public class InformedEntrypointHandler implements EntrypointHandler {
+    private static volatile InformedEntrypointHandler INSTANCE;
     public static RunArgs args;
-    @Override
-    public void beforeModsLoaded() {
-        /*if (InformedLoadUtils.config.entrypointDisplay) {
-            InformedLoadUtils.isDoingEarlyLoad = true;
-            RenderSystem.setupDefaultState(0, 0, MinecraftClient.getInstance().getWindow().getFramebufferWidth(), MinecraftClient.getInstance().getWindow().getFramebufferHeight());
-
-            ReloadableResourceManagerImpl resourceManager = (ReloadableResourceManagerImpl) this.resourceManager;
-            mc.getResourcePackManager().scanPacks();
-            List<ResourcePack> list = mc.getResourcePackManager().getEnabledProfiles().stream().map(ResourcePackProfile::createResourcePack).collect(Collectors.toList());
-            for (ResourcePack resourcePack_1 : list) {
-                resourceManager.addPack(resourcePack_1);
-            }
-
-            LanguageManager languageManager = new LanguageManager(options.language);
-            resourceManager.registerListener(languageManager);
-            languageManager.reloadResources(list);
-            InformedLoadUtils.textureManager = new TextureManager(resourceManager);
-
-            int i = MinecraftClient.getInstance().getWindow().calculateScaleFactor(options.guiScale, this.forcesUnicodeFont());
-            MinecraftClient.getInstance().getWindow().setScaleFactor((double)i);
-
-            Framebuffer framebuffer = this.getFramebuffer();
-            framebuffer.resize(MinecraftClient.getInstance().getWindow().getFramebufferWidth(), MinecraftClient.getInstance().getWindow().getFramebufferHeight(), IS_SYSTEM_MAC);
-
-            FontManager fontManager = new FontManager(InformedLoadUtils.textureManager, forcesUnicodeFont());
-            resourceManager.registerListener(fontManager.getResourceReloadListener());
-
-            final FontStorage fontStorage_1 = new FontStorage(InformedLoadUtils.textureManager, new Identifier("loading"));
-            fontStorage_1.setFonts(Collections.singletonList(FontType.BITMAP.createLoader(new JsonParser().parse(InformedLoadUtils.FONT_JSON).getAsJsonObject()).load(resourceManager)));
-            InformedLoadUtils.textRenderer = new TextRenderer(InformedLoadUtils.textureManager, fontStorage_1);
-
-            Modloader.getInstance(runDirectory).loadMods(InformedLoadUtils.textureManager, window);
-        }*/
+    public static void runThreadingBypassHandler(File newRunDir, Object gameInstance) {
         try {
             // Window creation and init
             MinecraftClientAccessor mc = ((MinecraftClientAccessor) (Object) MinecraftClient.getInstance());
@@ -114,8 +92,8 @@ public class InformedEntrypointHandler implements EntrypointHandler {
 
             InformedLoadUtils.isDoingEarlyLoad = true;
             RenderSystem.setupDefaultState(0, 0, MinecraftClient.getInstance().getWindow().getFramebufferWidth(), MinecraftClient.getInstance().getWindow().getFramebufferHeight());
-            
-            
+
+
             // Setup Informed Load hooks
             ReloadableResourceManagerImpl resourceManager = new ReloadableResourceManagerImpl(ResourceType.CLIENT_RESOURCES, mc.getThread());
             options.addResourcePackProfilesToManager(mc.getResourcePackManager());
@@ -146,5 +124,53 @@ public class InformedEntrypointHandler implements EntrypointHandler {
         } catch (Throwable t) {
             throw new RuntimeException(t);
         }
+        Thread loaderThread = new Thread(() -> EntrypointCatcher.LoaderClientReplacement.run(newRunDir, gameInstance));
+        loaderThread.start();
+        while (INSTANCE == null) {}
+        while (loaderThread.isAlive()) {
+            INSTANCE.render();
+        }
+    }
+
+    List<ProgressBar> progressBars = new ArrayList<>();
+    String subText1 = "", subText2 = "";
+    boolean keepRendering = true;
+    private static final Identifier LOGO = new Identifier("textures/gui/title/mojang.png");
+
+    private void render() {
+        GlStateManager.pushMatrix();
+        GlStateManager.clearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        GlStateManager.clear(16640, MinecraftClient.IS_SYSTEM_MAC);
+        GlStateManager.loadIdentity();
+        GlStateManager.ortho(0.0D, MinecraftClient.getInstance().getWindow().getScaledWidth(), MinecraftClient.getInstance().getWindow().getScaledHeight(), 0.0D, -1000.0D, 1000.0D);
+        RenderSystem.matrixMode(5888);
+        //GlStateManager.enableBlend();
+        InformedLoadUtils.textureManager.bindTexture(LOGO);
+        GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0f);
+        DrawableHelper.blit((MinecraftClient.getInstance().getWindow().getScaledWidth() - 256) / 2, (MinecraftClient.getInstance().getWindow().getScaledHeight() - 256) / 2 - 40, 0, 0, 0, 256, 256, 256, 256);
+        for (int i = 0; i < progressBars.size(); i++) {
+            ProgressBar progressBar = progressBars.get(i);
+            progressBar.render(MinecraftClient.getInstance().getWindow());
+        }
+        renderSubText(subText2, 0);
+        renderSubText(subText1, 1);
+        GlStateManager.popMatrix();
+        glfwSwapBuffers(MinecraftClient.getInstance().getWindow().getHandle());
+        try {
+            glfwPollEvents();
+        } catch (NullPointerException ignoreme) {
+            // ok boomer
+        }
+        if (GLX._shouldClose(MinecraftClient.getInstance().getWindow())) {
+            MinecraftClient.getInstance().stop();
+        }
+    }
+
+    private void renderSubText(String text, int row) {
+        InformedLoadUtils.textRenderer.draw(text, MinecraftClient.getInstance().getWindow().getScaledWidth() / 2f - InformedLoadUtils.textRenderer.getStringWidth(text) / 2f, MinecraftClient.getInstance().getWindow().getScaledHeight() - (row + 1) * 20, 0x666666);
+    }
+    @Override
+    public void beforeModsLoaded() {
+        INSTANCE = this;
     }
 }

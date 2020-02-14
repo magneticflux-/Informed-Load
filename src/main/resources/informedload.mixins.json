@@ -14,7 +14,9 @@
     "RenderPhaseLightmapMixin",
     "MinecraftServerMixin",
 
-    "MinecraftClientAccessor"
+    "MinecraftClientAccessor",
+
+    "EntrypointCatcherMixin"
   ],
   "injectors": {
     "defaultRequire": 1
