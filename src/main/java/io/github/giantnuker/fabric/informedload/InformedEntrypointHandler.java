@@ -6,11 +6,14 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.giantnuker.fabric.informedload.api.ProgressBar;
 import io.github.giantnuker.fabric.informedload.mixin.MinecraftClientAccessor;
-import io.github.giantnuker.fabric.informedload.mixin.MixinMinecraftClient;
 import io.github.giantnuker.fabric.loadcatcher.EntrypointCatcher;
 import io.github.giantnuker.fabric.loadcatcher.EntrypointHandler;
-import net.fabricmc.api.EnvType;
+import io.github.giantnuker.fabric.loadcatcher.EntrypointKind;
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.api.ModInitializer;
+import net.fabricmc.loader.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
+import net.fabricmc.loader.api.metadata.ModMetadata;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.RunArgs;
 import net.minecraft.client.WindowSettings;
@@ -23,6 +26,7 @@ import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.resource.language.LanguageManager;
 import net.minecraft.client.texture.TextureManager;
+import net.minecraft.client.util.Window;
 import net.minecraft.client.util.WindowProvider;
 import net.minecraft.resource.*;
 import net.minecraft.util.Identifier;
@@ -33,9 +37,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static net.minecraft.client.MinecraftClient.IS_SYSTEM_MAC;
@@ -43,6 +46,7 @@ import static org.lwjgl.glfw.GLFW.glfwPollEvents;
 import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
 
 public class InformedEntrypointHandler implements EntrypointHandler {
+    public static boolean STARTED = false;
     private static volatile InformedEntrypointHandler INSTANCE;
     public static RunArgs args;
     public static void runThreadingBypassHandler(File newRunDir, Object gameInstance) {
@@ -124,7 +128,8 @@ public class InformedEntrypointHandler implements EntrypointHandler {
         } catch (Throwable t) {
             throw new RuntimeException(t);
         }
-        Thread loaderThread = new Thread(() -> EntrypointCatcher.LoaderClientReplacement.run(newRunDir, gameInstance));
+        STARTED = true;
+        Thread loaderThread = new Thread(() -> EntrypointCatcher.runEntrypointRedirection(newRunDir, gameInstance)); // Doing this allows someone else to redirect it still
         loaderThread.start();
         while (INSTANCE == null) {}
         while (loaderThread.isAlive()) {
@@ -169,8 +174,94 @@ public class InformedEntrypointHandler implements EntrypointHandler {
     private void renderSubText(String text, int row) {
         InformedLoadUtils.textRenderer.draw(text, MinecraftClient.getInstance().getWindow().getScaledWidth() / 2f - InformedLoadUtils.textRenderer.getStringWidth(text) / 2f, MinecraftClient.getInstance().getWindow().getScaledHeight() - (row + 1) * 20, 0x666666);
     }
+
+    public ProgressBar createProgressBar(int row, ProgressBar.SplitType splitType) {
+        return new ProgressBar.SplitProgressBar(splitType) {
+            @Override
+            protected int getY(Window window) {
+                return row * 20 + window.getScaledHeight() / 4 * 3 - 40;
+            }
+        };
+    }
+
+    Map<String, ModContainer> mainToContainer;
+    Map<String, ModContainer> clientToContainer;
+
+    AtomicInteger index;
+    AtomicInteger total;
+
+    ProgressBar overall;
+    ProgressBar commonEntrypoints;
+    ProgressBar clientEntrypoints;
+
+    int totalClientEntrypoints;
+
     @Override
     public void beforeModsLoaded() {
         INSTANCE = this;
+        progressBars.clear();
+        overall = createProgressBar(0, ProgressBar.SplitType.NONE);
+        progressBars.add(overall);
+        overall.setText("Locating Entrypoints");
+        InformedLoadUtils.LOGGER.info("Locating Entrypoints");
+        mainToContainer = new HashMap<>();
+        clientToContainer = new HashMap<>();
+
+        InformedLoadUtils.LOGGER.info("Loading Mods");
+        int totalMainEntrypoints = FabricLoader.INSTANCE.getEntrypoints("main", ModInitializer.class).size();
+        totalClientEntrypoints = FabricLoader.INSTANCE.getEntrypoints("client", ClientModInitializer.class).size();
+        commonEntrypoints = createProgressBar(1, ProgressBar.SplitType.LEFT);
+        commonEntrypoints.setText(totalMainEntrypoints + " Common");
+        clientEntrypoints = createProgressBar(1, ProgressBar.SplitType.RIGHT);
+        clientEntrypoints.setText(totalClientEntrypoints + " Client");
+
+        index = new AtomicInteger();
+        total = new AtomicInteger(totalMainEntrypoints);
+
+        progressBars.add(commonEntrypoints);
+        progressBars.add(clientEntrypoints);
+    }
+    @Override
+    public void beforeModInitEntrypoint(String id, ModContainer mod, EntrypointKind entrypointKind) {
+        overall.setText("Running Entrypoints - " + (entrypointKind == EntrypointKind.CLIENT ? "Client" : "Common"));
+        if (entrypointKind == EntrypointKind.CLIENT && totalClientEntrypoints != -1) {
+            commonEntrypoints.setText("Common Complete");
+            total.set(totalClientEntrypoints);
+            index.set(0);
+            totalClientEntrypoints = -1;
+        }
+        index.set(index.get() + 1);
+        subText1 = "";
+        subText2 = "";
+        ModMetadata metadata = mod != null ? mod.getMetadata() : null;
+        if (metadata != null) {
+            subText1 = metadata.getName() + " (" + metadata.getId() + ")";
+        } else {
+            subText1 = "UNKNOWN MOD";
+        }
+        subText2 = id;
+
+        InformedLoadUtils.logDebug(metadata == null ? String.format("Loading [UNKNOWN MOD]: %s (%s)", id, entrypointKind == EntrypointKind.CLIENT ? "Client" : "Main") : String.format("Loading %s(%s): %s (%s)", metadata.getName(), metadata.getId(), id, entrypointKind == EntrypointKind.CLIENT ? "Client" : "Main"));
+    }
+
+    @Override
+    public void afterModInitEntrypoint(String id, ModContainer mod, EntrypointKind entrypointKind) {
+        switch (entrypointKind) {
+            case CLIENT:
+                clientEntrypoints.setText(index.get() + "/" + total.get() + " Client");
+                clientEntrypoints.setProgress((float)(index.get()) / total.get());
+                overall.setProgress(0.5f + (((float)(index.get()) / total.get()) / 2f));
+                break;
+            case COMMON:
+                commonEntrypoints.setText(index.get() + "/" + total.get() + " Common");
+                commonEntrypoints.setProgress((float)(index.get()) / total.get());
+                overall.setProgress(((float)(index.get()) / total.get()) / 2f);
+                break;
+        }
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
