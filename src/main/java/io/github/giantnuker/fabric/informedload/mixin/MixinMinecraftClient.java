@@ -1,33 +1,18 @@
 package io.github.giantnuker.fabric.informedload.mixin;
 
-import com.google.common.collect.Lists;
-import com.mojang.blaze3d.systems.RenderSystem;
-import io.github.giantnuker.fabric.informedload.Config;
+import io.github.giantnuker.fabric.informedload.InformedEntrypointHandler;
 import io.github.giantnuker.fabric.informedload.InformedLoadUtils;
-import io.github.giantnuker.fabric.informedload.Modloader;
-import com.google.gson.JsonParser;
-import me.sargunvohra.mcmods.autoconfig1.AutoConfig;
-import me.sargunvohra.mcmods.autoconfig1.ConfigManager;
-import me.sargunvohra.mcmods.autoconfig1.serializer.JanksonConfigSerializer;
-import net.fabricmc.loader.FabricLoader;
-import net.fabricmc.loader.api.ModContainer;
-import net.fabricmc.loader.api.metadata.ModMetadata;
-import net.fabricmc.loader.entrypoint.minecraft.hooks.EntrypointClient;
-import net.fabricmc.loader.metadata.EntrypointMetadata;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.FontManager;
-import net.minecraft.client.font.FontStorage;
-import net.minecraft.client.font.FontType;
-import net.minecraft.client.font.TextRenderer;
+import net.minecraft.Bootstrap;
+import net.minecraft.client.*;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.options.GameOptions;
+import net.minecraft.client.resource.ClientBuiltinResourcePackProvider;
 import net.minecraft.client.resource.ClientResourcePackProfile;
-import net.minecraft.client.resource.language.LanguageManager;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.client.util.Window;
+import net.minecraft.client.util.WindowProvider;
 import net.minecraft.resource.*;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Unit;
+import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -37,13 +22,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
-@Mixin(MinecraftClient.class)
+@Mixin(MinecraftClient.class) //FIXME keybinds not added because gameoptions array already initialized
 public abstract class MixinMinecraftClient {
     @Shadow @Final public File runDirectory;
 
@@ -62,7 +42,30 @@ public abstract class MixinMinecraftClient {
     @Shadow @Final public static boolean IS_SYSTEM_MAC;
 
     @Shadow @Final private ReloadableResourceManager resourceManager;
-    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/options/GameOptions;addResourcePackProfilesToManager(Lnet/minecraft/resource/ResourcePackManager;)V"))
+
+    @Shadow protected abstract void startTimerHackThread();
+
+    @Shadow @Final private static Logger LOGGER;
+
+    @Shadow @Final private WindowProvider windowProvider;
+
+    @Shadow protected abstract String getWindowTitle();
+
+    @Shadow public abstract void onWindowFocusChanged(boolean focused);
+
+    @Shadow public abstract ClientBuiltinResourcePackProvider getResourcePackDownloader();
+
+    @Shadow @Final public Mouse mouse;
+
+    @Shadow @Final public Keyboard keyboard;
+
+    @Shadow @Final private Framebuffer framebuffer;
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/Bootstrap;initialize()V", ordinal = 0))
+    private void grabArgs(RunArgs args) {
+        Bootstrap.initialize();
+        InformedEntrypointHandler.args = args;
+    }
+    /*@Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/options/GameOptions;addResourcePackProfilesToManager(Lnet/minecraft/resource/ResourcePackManager;)V"))
     private void moveModload(GameOptions gameOptions, ResourcePackManager<ClientResourcePackProfile> manager) {
         gameOptions.addResourcePackProfilesToManager(manager);
         if (InformedLoadUtils.config.entrypointDisplay) {
@@ -96,6 +99,9 @@ public abstract class MixinMinecraftClient {
 
             Modloader.getInstance(runDirectory).loadMods(InformedLoadUtils.textureManager, window);
         }
+    }*/
+    public void doathing() throws NoSuchFieldException, IllegalAccessException {
+
     }
     @Inject(method = "getTextureManager", at = @At("HEAD"), cancellable = true)
     public void changeTextureManager(CallbackInfoReturnable<TextureManager> cir) {

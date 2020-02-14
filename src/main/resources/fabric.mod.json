@@ -22,6 +22,9 @@
 
   "environment": "client",
   "entrypoints": {
+    "entry_handler": [
+      "io.github.giantnuker.fabric.informedload.InformedEntrypointHandler"
+    ],
     "preLaunch": [
       "io.github.giantnuker.fabric.informedload.PreLaunch"
     ],

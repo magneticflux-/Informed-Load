@@ -12,7 +12,9 @@
     "MixinWorldGenProgressTracker",
     "MixinWorldGenProgressLogger",
     "RenderPhaseLightmapMixin",
-    "MinecraftServerMixin"
+    "MinecraftServerMixin",
+
+    "MinecraftClientAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

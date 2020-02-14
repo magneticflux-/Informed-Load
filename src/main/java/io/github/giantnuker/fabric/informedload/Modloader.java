@@ -71,9 +71,9 @@ public class Modloader {
                 }
             }
         };
-        EntrypointCatcher.NormalOperations.runCommonBegins();
+        //EntrypointCatcher.NormalOperations.runCommonBegins();
         InformedLoadUtils.logInitErrors("main", FabricLoader.INSTANCE.getEntrypoints("main", ModInitializer.class), consumer);
-        EntrypointCatcher.NormalOperations.runClientBegins();
+       // EntrypointCatcher.NormalOperations.runClientBegins();
         InformedLoadUtils.logInitErrors("client", FabricLoader.INSTANCE.getEntrypoints("client", ClientModInitializer.class), consumer);
         InformedLoadUtils.config.excludedEntrypoints.forEach(it -> {
             if (!alreadyLoadedMains.contains(it) && !alreadyLoadedClients.contains(it)) System.err.println("[Informed Load] Unable to find entrypoint \"" + it + "\" to run early.");
@@ -119,7 +119,7 @@ public class Modloader {
         InformedLoadUtils.LOGGER.info("Locating Entrypoints");
         Map<String, ModContainer> mainToContainer = new HashMap<>();
         Map<String, ModContainer> clientToContainer = new HashMap<>();
-        EntrypointCatcher.NormalOperations.runContainerChecks(mainToContainer, clientToContainer);
+        //EntrypointCatcher.NormalOperations.runContainerChecks(mainToContainer, clientToContainer);
         InformedLoadUtils.LOGGER.info("Loading Mods");
         int totalMainEntrypoints = FabricLoader.INSTANCE.getEntrypoints("main", ModInitializer.class).size() - alreadyLoadedMains.size();
         int totalClientEntrypoints = FabricLoader.INSTANCE.getEntrypoints("client", ClientModInitializer.class).size() - alreadyLoadedClients.size();
@@ -137,9 +137,9 @@ public class Modloader {
             subText1 = "";
             subText2 = "";
             ModContainer container = (client ? clientToContainer : mainToContainer).get(id);
-            for (EntrypointHandler handler : EntrypointCatcher.getHandlerEntrypoints()) {
-                handler.onModInitializeBegin(container, client ? EnvType.CLIENT : EnvType.SERVER);
-            }
+       //     for (EntrypointHandler handler : EntrypointCatcher.getHandlerEntrypoints()) {
+               // handler.onModInitializeBegin(container, client ? EnvType.CLIENT : EnvType.SERVER);
+        //    }
             ModMetadata metadata = container != null ? container.getMetadata() : null;
             if (metadata != null) {
                 subText1 = metadata.getName() + " (" + metadata.getId() + ")";
@@ -157,9 +157,9 @@ public class Modloader {
                 } catch (Throwable e) {
                     error = e;
                 }
-                for (EntrypointHandler handler : EntrypointCatcher.getHandlerEntrypoints()) {
-                    handler.onModInitializeEnd(container, EnvType.CLIENT, error);
-                }
+                //for (EntrypointHandler handler : EntrypointCatcher.getHandlerEntrypoints()) {
+                    //handler.onModInitializeEnd(container, EnvType.CLIENT, error);
+                //}
                 clientEntrypoints.setText(index.get() + "/" + total.get() + " Client");
                 clientEntrypoints.setProgress((float)(index.get()) / total.get());
                 overall.setProgress(0.5f + (((float)(index.get()) / total.get()) / 2f));
@@ -170,9 +170,9 @@ public class Modloader {
                 } catch (Throwable e) {
                     error = e;
                 }
-                for (EntrypointHandler handler : EntrypointCatcher.getHandlerEntrypoints()) {
-                    handler.onModInitializeEnd(container, EnvType.SERVER, error);
-                }
+              //  for (EntrypointHandler handler : EntrypointCatcher.getHandlerEntrypoints()) {
+              //      handler.onModInitializeEnd(container, EnvType.SERVER, error);
+               // }
                 mainEntrypoints.setText(index.get() + "/" + total.get() + " Common");
                 mainEntrypoints.setProgress((float)(index.get()) / total.get());
                 overall.setProgress(((float)(index.get()) / total.get()) / 2f);
@@ -180,7 +180,7 @@ public class Modloader {
         };
         overall.setText("Creating Render Callbacks");
         overall.setProgress(1f/8f);
-        EntrypointCatcher.NormalOperations.runCommonBegins();
+     //   EntrypointCatcher.NormalOperations.runCommonBegins();
         overall.setText("Running Entrypoints - Common");
         progressBars.add(mainEntrypoints);
         progressBars.add(clientEntrypoints);
@@ -188,7 +188,7 @@ public class Modloader {
         InformedLoadUtils.logInitErrors("main", FabricLoader.INSTANCE.getEntrypoints("main", ModInitializer.class), initializer -> runInitializer.accept(initializer, false));
         mainEntrypoints.setProgress(1);
         mainEntrypoints.setText("Common Complete");
-        EntrypointCatcher.NormalOperations.runClientBegins();
+    //   EntrypointCatcher.NormalOperations.runClientBegins();
         overall.setText("Running Entrypoints - Client");
         index.set(alreadyLoadedClients.size());
         total.set(totalClientEntrypoints);
@@ -198,7 +198,7 @@ public class Modloader {
         subText1 = "";
         subText2 = "";
         InformedLoadUtils.LOGGER.info("Early Modloading Complete. Starting Minecraft...");
-        EntrypointCatcher.NormalOperations.runEnd();
+ //       EntrypointCatcher.NormalOperations.runEnd();
         overall.setText("Starting Minecraft");
         overall.setProgress(1);
         keepRendering = false;

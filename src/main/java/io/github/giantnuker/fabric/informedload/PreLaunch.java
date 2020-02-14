@@ -48,8 +48,8 @@ public class PreLaunch implements PreLaunchEntrypoint {
             System.exit(0);
         }
         //InformedLoadUtils.config.entrypointDisplay = false;
-        if (InformedLoadUtils.config.entrypointDisplay) {
+        /*if (InformedLoadUtils.config.entrypointDisplay) {
             EntrypointCatcher.redirectEntrypointHandler("Informed Load", new ModEntrypointRedirector());
-        }
+        }*/
     }
 }
