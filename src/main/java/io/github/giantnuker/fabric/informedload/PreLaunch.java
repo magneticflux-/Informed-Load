@@ -1,7 +1,6 @@
 package io.github.giantnuker.fabric.informedload;
 
 import com.google.common.collect.Lists;
-import io.github.giantnuker.fabric.loadcatcher.EntrypointCatcher;
 import me.sargunvohra.mcmods.autoconfig1.AutoConfig;
 import me.sargunvohra.mcmods.autoconfig1.ConfigManager;
 import me.sargunvohra.mcmods.autoconfig1.serializer.JanksonConfigSerializer;
@@ -47,9 +46,5 @@ public class PreLaunch implements PreLaunchEntrypoint {
             //End
             System.exit(0);
         }
-        //InformedLoadUtils.config.entrypointDisplay = false;
-        /*if (InformedLoadUtils.config.entrypointDisplay) {
-            EntrypointCatcher.redirectEntrypointHandler("Informed Load", new ModEntrypointRedirector());
-        }*/
     }
 }

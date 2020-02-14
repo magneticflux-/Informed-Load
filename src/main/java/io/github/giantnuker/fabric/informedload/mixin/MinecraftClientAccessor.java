@@ -8,12 +8,9 @@ import net.minecraft.client.resource.ClientBuiltinResourcePackProvider;
 import net.minecraft.client.resource.ClientResourcePackProfile;
 import net.minecraft.client.util.Window;
 import net.minecraft.client.util.WindowProvider;
-import net.minecraft.resource.ReloadableResourceManager;
 import net.minecraft.resource.ResourcePackManager;
 import org.apache.logging.log4j.Logger;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.gen.Invoker;
 

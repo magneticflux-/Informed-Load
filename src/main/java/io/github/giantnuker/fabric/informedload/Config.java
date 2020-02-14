@@ -4,9 +4,6 @@ import me.sargunvohra.mcmods.autoconfig1.ConfigData;
 import me.sargunvohra.mcmods.autoconfig1.annotation.ConfigEntry;
 import me.sargunvohra.mcmods.autoconfig1.shadowed.blue.endless.jankson.Comment;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author Indigo Amann
  */
@@ -22,9 +19,6 @@ public class Config implements ConfigData {
     @ConfigEntry.Category("splash")
     @Comment("If informed load has conflicts, run this to figure out what entrypoints go to what mods, so you can disable them")
     public boolean printEntrypoints = false;
-    @ConfigEntry.Category("splash")
-    @Comment("Entrypoints to exclude from display (Will happen before screen opens)")
-    public List<String> excludedEntrypoints = new ArrayList<>();
     @ConfigEntry.Category("splash")
     @Comment("Model add progress bars")
     public SplitType splash_splitProgressBars = SplitType.SPLIT;
