@@ -28,7 +28,10 @@ import net.minecraft.client.resource.language.LanguageManager;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.client.util.Window;
 import net.minecraft.client.util.WindowProvider;
-import net.minecraft.resource.*;
+import net.minecraft.resource.ReloadableResourceManagerImpl;
+import net.minecraft.resource.ResourcePack;
+import net.minecraft.resource.ResourcePackProfile;
+import net.minecraft.resource.ResourceType;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
 
@@ -52,7 +55,7 @@ public class InformedEntrypointHandler implements EntrypointHandler {
     public static void runThreadingBypassHandler(File newRunDir, Object gameInstance) {
         try {
             // Window creation and init
-            MinecraftClientAccessor mc = ((MinecraftClientAccessor) (Object) MinecraftClient.getInstance());
+            MinecraftClientAccessor mc = ((MinecraftClientAccessor) MinecraftClient.getInstance());
             Field modifiersField = Field.class.getDeclaredField("modifiers");
             modifiersField.setAccessible(true);
             mc.runStartTimerHackThread();
@@ -67,7 +70,8 @@ public class InformedEntrypointHandler implements EntrypointHandler {
             }
 
             Util.nanoTimeSupplier = RenderSystem.initBackendSystem();
-            Field windowProviderField = MinecraftClient.class.getDeclaredField("windowProvider");
+            Field windowProviderField = MinecraftClient.class.getDeclaredField(FabricLoader.INSTANCE.getMappingResolver().mapFieldName("intermediary", "net.minecraft.class_310", "field_1686", "Lnet/minecraft/class_3682;"));
+            //                                                                                                                                        net.minecraft.client.MinecraftClient windowProvider net.minecraft.client.util.WindowProvider
             modifiersField.setInt(windowProviderField, windowProviderField.getModifiers() & ~Modifier.FINAL);
             windowProviderField.setAccessible(true);
             windowProviderField.set(MinecraftClient.getInstance(), new WindowProvider(MinecraftClient.getInstance()));
@@ -88,7 +92,8 @@ public class InformedEntrypointHandler implements EntrypointHandler {
             //this.keyboard = new Keyboard(this);
             //this.keyboard.setup(MinecraftClient.getInstance().getWindow().getHandle());
             RenderSystem.initRenderer(options.glDebugVerbosity, false);
-            Field framebufferField = MinecraftClient.class.getDeclaredField("framebuffer");
+            Field framebufferField = MinecraftClient.class.getDeclaredField(FabricLoader.INSTANCE.getMappingResolver().mapFieldName("intermediary", "net.minecraft.class_310", "field_1689", "Lnet/minecraft/class_276;"));
+            //                                                                                                                                      net.minecraft.client.MinecraftClient framebuffer net.minecraft.client.gl.Framebuffer
             modifiersField.setInt(framebufferField, framebufferField.getModifiers() & ~Modifier.FINAL);
             framebufferField.setAccessible(true);
             framebufferField.set(MinecraftClient.getInstance(), new Framebuffer(MinecraftClient.getInstance().getWindow().getFramebufferWidth(), MinecraftClient.getInstance().getWindow().getFramebufferHeight(), true, IS_SYSTEM_MAC));
@@ -114,7 +119,7 @@ public class InformedEntrypointHandler implements EntrypointHandler {
             InformedLoadUtils.textureManager = new TextureManager(resourceManager);
 
             int i = MinecraftClient.getInstance().getWindow().calculateScaleFactor(options.guiScale, options.forceUnicodeFont);
-            MinecraftClient.getInstance().getWindow().setScaleFactor((double)i);
+            MinecraftClient.getInstance().getWindow().setScaleFactor(i);
 
             Framebuffer framebuffer = mc.getFramebuffer();
             framebuffer.resize(MinecraftClient.getInstance().getWindow().getFramebufferWidth(), MinecraftClient.getInstance().getWindow().getFramebufferHeight(), IS_SYSTEM_MAC);
@@ -249,13 +254,13 @@ public class InformedEntrypointHandler implements EntrypointHandler {
         switch (entrypointKind) {
             case CLIENT:
                 clientEntrypoints.setText(index.get() + "/" + total.get() + " Client");
-                clientEntrypoints.setProgress((float)(index.get()) / total.get());
-                overall.setProgress(0.5f + (((float)(index.get()) / total.get()) / 2f));
+                clientEntrypoints.setProgress((float) (index.get()) / total.get());
+                overall.setProgress((0.5f + (((float) (index.get()) / total.get()) / 2f)) / 2f);
                 break;
             case COMMON:
                 commonEntrypoints.setText(index.get() + "/" + total.get() + " Common");
-                commonEntrypoints.setProgress((float)(index.get()) / total.get());
-                overall.setProgress(((float)(index.get()) / total.get()) / 2f);
+                commonEntrypoints.setProgress((float) (index.get()) / total.get());
+                overall.setProgress((((float) (index.get()) / total.get()) / 2f) / 2f);
                 break;
         }
     }
