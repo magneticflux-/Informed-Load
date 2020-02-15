@@ -258,10 +258,5 @@ public class InformedEntrypointHandler implements EntrypointHandler {
                 overall.setProgress(((float)(index.get()) / total.get()) / 2f);
                 break;
         }
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 }
