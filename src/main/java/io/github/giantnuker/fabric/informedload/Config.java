@@ -10,7 +10,7 @@ import me.sargunvohra.mcmods.autoconfig1.shadowed.blue.endless.jankson.Comment;
 @me.sargunvohra.mcmods.autoconfig1.annotation.Config(name = InformedLoadUtils.MODID)
 public class Config implements ConfigData {
     public boolean logDebugs = false;
-    public static enum SplitType {
+    public enum SplitType {
         SPLIT, IN_ORDER, SINGLE
     }
     @ConfigEntry.Category("splash")
@@ -29,15 +29,19 @@ public class Config implements ConfigData {
     @ConfigEntry.Category("splash")
     @Comment("Keep same progress bars even if splash tewakers are installed.")
     public boolean splash_forceVanillaProgressBars = false;
+
     //@Comment("If you like red, Turn me off")
     //public boolean multicoloredProgressBars = true;
     public static class HateDisplay {
         @Comment("Don't like the new world load thingy?")
         public boolean progressBarDisplay = false;
     }
+
     public static class LoveDisplay {
-        @Comment("Grayscale-ify the chunkload square")
-        public boolean simplifyColors = true;
+        @Comment("Its really cool trust me")
+        public boolean worldmap = true;
+        @Comment("The smaller this number, the beefier your computer needs to be; 1-4 or something bad will happen")
+        public int worldmap_quality = 2;
         @Comment("Bigger is better!")
         public boolean bigChunkViewer = true;
         @Comment("Do you like progress bars!!!")

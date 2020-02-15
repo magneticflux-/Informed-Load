@@ -166,14 +166,15 @@ public class InformedLoadUtils implements ModInitializer {
                 Chunk chunk = chunkStatus != null && chunkStatus.getIndex() >= ChunkStatus.FEATURES.getIndex() ? InformedLoadUtils.loadingWorld == null ? null : InformedLoadUtils.loadingWorld.getChunk(chunkX, chunkZ, ChunkStatus.EMPTY, false) : null;
                 int dispX = minX + gridX * chunkSize;
                 int dispY = minY + gridY * chunkSize;
-                if (chunk == null) {
+                if (chunk == null || !config.worldload_loveDisplay.worldmap) {
                     fill(dispX, dispY, dispX + chunkSize, dispY + chunkSize, 0xFFFFFFFF);
                     fill(dispX, dispY, dispX + chunkSize, dispY + chunkSize, STATUS_TO_COLOR.getInt(chunkStatus));
                 } else {
                     BlockState blockState;
                     MaterialColor color = null;
-                    for (int x = 0; x < 16; x += 4) {
-                        for (int z = 0; z < 16; z += 4) {
+                    int sz = (int) Math.pow(2, config.worldload_loveDisplay.worldmap_quality);
+                    for (int x = 0; x < 16; x += sz) {
+                        for (int z = 0; z < 16; z += sz) {
                             int aa = chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE, x, z) + 1;
                             do {
                                 --aa;
@@ -183,7 +184,7 @@ public class InformedLoadUtils implements ModInitializer {
                             int c1 = color.getRenderColor(2);
                             int newc = (((c1 >> 0) & 0xFF) << 16) | (((c1 >> 8) & 0xFF) << 8) | (((c1 >> 16) & 0xFF) << 0) | 0xFF000000;
 
-                            fill(dispX + (int)(chunkSize / (16f / x)), dispY + (int)(chunkSize / (16f / z)), dispX + chunkSize, dispY + chunkSize, newc);
+                            fill(dispX + (int) (chunkSize / (16f / x)), dispY + (int) (chunkSize / (16f / z)), dispX + chunkSize, dispY + chunkSize, newc);
                         }
                     }
                     if (chunkStatus != ChunkStatus.FULL) {

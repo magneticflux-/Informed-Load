@@ -73,9 +73,9 @@ public class MixinWorldGenProgress  {
             InformedLoadUtils.WorldGen.int_13 = -16772609;
             InformedLoadUtils.drawChunkMap(worldGenerationProgressTracker_1, x, y, scale);
         } else {
-            IProgressTracker progressTracker = ((IProgressTracker)((Object)worldGenerationProgressTracker_1));
+            IProgressTracker progressTracker = ((IProgressTracker) worldGenerationProgressTracker_1);
             WorldGenerationProgressLogger progressLogger = progressTracker.getProgressLogger();
-            float totals = ((IProgressLogger)((Object)progressLogger)).getTotalCount();
+            float totals = ((IProgressLogger) progressLogger).getTotalCount();
             int biomes = 0, noise = 0, surface = 0, carvers = 0, liquid_carvers = 0, features = 0, light = 0, spawn = 0, full = 0;
             for (ChunkStatus e: progressTracker.getChunkStatuses().values()) {
                 if (e == ChunkStatus.BIOMES) {
@@ -158,17 +158,17 @@ public class MixinWorldGenProgress  {
     }
     @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/LevelLoadingScreen;drawCenteredString(Lnet/minecraft/client/font/TextRenderer;Ljava/lang/String;III)V"))
     public void drawCenteredStringOrProgressBar(LevelLoadingScreen LevelLoadingScreen, TextRenderer textRenderer_1, String string_1, int x, int y, int int_3) {
-        IProgressTracker progressTracker = ((IProgressTracker)((Object)progressProvider));
+        IProgressTracker progressTracker = ((IProgressTracker) progressProvider);
         WorldGenerationProgressLogger progressLogger = progressTracker.getProgressLogger();
-        int totals = ((IProgressLogger)((Object)progressLogger)).getTotalCount();
-        int done = ((IProgressLogger)((Object)progressLogger)).getGeneratedCount();
+        int totals = ((IProgressLogger) progressLogger).getTotalCount();
+        int done = ((IProgressLogger) progressLogger).getGeneratedCount();
         if (!InformedLoadUtils.config.worldload_hateDisplay.progressBarDisplay) {
             if (InformedLoadUtils.config.worldload_loveDisplay.showProgressBar) {
                 y += 95;
                 if (InformedLoadUtils.config.worldload_loveDisplay.bigChunkViewer) y += 30;
                 InformedLoadUtils.makeProgressBar(x - 150, y, x + 150, y + 10, progressProvider.getProgressPercentage() / 100f, done + "/" + totals + " Chunks Loaded - " + string_1, Color.DARK_GRAY.getRGB(), Color.LIGHT_GRAY.getRGB());
             } else {
-                LevelLoadingScreen.drawCenteredString(textRenderer_1, string_1, x, y, int_3);
+                LevelLoadingScreen.drawCenteredString(textRenderer_1, string_1, x, y - (InformedLoadUtils.config.worldload_loveDisplay.bigChunkViewer ? 20 : 0), int_3);
             }
         }
     }
