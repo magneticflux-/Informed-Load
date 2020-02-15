@@ -5,7 +5,6 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.loader.FabricLoader;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.MaterialColor;
 import net.minecraft.client.font.TextRenderer;
@@ -26,10 +25,7 @@ import org.apache.logging.log4j.message.MessageFactory;
 import org.apache.logging.log4j.message.SimpleMessage;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.function.Consumer;
 
 import static net.minecraft.client.gui.DrawableHelper.fill;
@@ -166,8 +162,8 @@ public class InformedLoadUtils implements ModInitializer {
                 //ChunkPos.toLong(x + this.spawnPos.x - this.radius, z + this.spawnPos.z - this.radius)
                 int chunkX = gridX + spawnPos.x - radius;
                 int chunkZ = gridY + spawnPos.z - radius;
-                ChunkStatus chunkStatus = ((IProgressTracker)progressProvider).getChunkStatuses().get(ChunkPos.toLong(chunkX, chunkZ));
-                Chunk chunk = chunkStatus != null && chunkStatus.getIndex() >= ChunkStatus.SURFACE.getIndex() ? InformedLoadUtils.loadingWorld == null ? null : InformedLoadUtils.loadingWorld.getChunk(chunkX, chunkZ, ChunkStatus.EMPTY, false) : null;
+                ChunkStatus chunkStatus = ((IProgressTracker) progressProvider).getChunkStatuses().get(ChunkPos.toLong(chunkX, chunkZ));
+                Chunk chunk = chunkStatus != null && chunkStatus.getIndex() >= ChunkStatus.FEATURES.getIndex() ? InformedLoadUtils.loadingWorld == null ? null : InformedLoadUtils.loadingWorld.getChunk(chunkX, chunkZ, ChunkStatus.EMPTY, false) : null;
                 int dispX = minX + gridX * chunkSize;
                 int dispY = minY + gridY * chunkSize;
                 if (chunk == null) {
@@ -209,29 +205,6 @@ public class InformedLoadUtils implements ModInitializer {
         public static int int_11 = 0;
         public static int int_12 = 0;
         public static int int_13 = 0;
-    }
-    public static <T> void logInitErrors(String name, Collection<T> entrypoints, Consumer<T> entrypointConsumer) {
-        List<Throwable> errors = new ArrayList<>();
-
-        FabricLoader.INSTANCE.getLogger().debug("Iterating over entrypoint '" + name + "'");
-
-        entrypoints.forEach((e) -> {
-            try {
-                entrypointConsumer.accept(e);
-            } catch (Throwable t) {
-                errors.add(t);
-            }
-        });
-
-        if (!errors.isEmpty()) {
-            RuntimeException exception = new RuntimeException("Could not execute entrypoint stage '" + name + "' due to errors!");
-
-            for (Throwable t : errors) {
-                exception.addSuppressed(t);
-            }
-
-            throw exception;
-        }
     }
     public static ServerWorld loadingWorld = null;
 }
