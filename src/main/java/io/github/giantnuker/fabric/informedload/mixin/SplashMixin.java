@@ -1,7 +1,7 @@
 package io.github.giantnuker.fabric.informedload.mixin;
 
-import io.github.giantnuker.fabric.informedload.InformedLoadUtils;
 import com.google.gson.JsonParser;
+import io.github.giantnuker.fabric.informedload.InformedLoadUtils;
 import io.github.giantnuker.fabric.informedload.TaskList;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.FontStorage;
@@ -50,7 +50,7 @@ public abstract class SplashMixin extends Overlay {
                 status += " - " + ((TaskList.Task) iterator.next()).name;
             }
         }
-        InformedLoadUtils.makeProgressBar(window_width / 2 - 150, y, window_width / 2 + 150, y + 10, this.progress, status);
+        InformedLoadUtils.makeProgressBar(window_width / 2 - 150, y, window_width / 2 + 150, y + 10, this.progress < 0.5f ? 0.5f : this.progress, status);
         y += 20;
         if (!TaskList.isEmpty()) {
             Iterator iterator = TaskList.iterator();
