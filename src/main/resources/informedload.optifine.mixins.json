@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "io.github.giantnuker.fabric.informedload.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "client": [
+    "OptifineConfigMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

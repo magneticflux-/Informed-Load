@@ -30,6 +30,9 @@
     ],
     "main": [
       "io.github.giantnuker.fabric.informedload.InformedLoadUtils"
+    ],
+    "mm:early_risers": [
+      "io.github.giantnuker.fabric.informedload.EarlyRiser"
     ]
   },
   "depends": {

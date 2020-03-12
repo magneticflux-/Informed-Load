@@ -9,8 +9,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(RenderPhase.Lightmap.class)
 public class RenderPhaseLightmapMixin {
-    @Inject(method={"method_23551","method_23552"}, at = @At("HEAD"), cancellable = true)
+    /**
+     * Targets synthetic methods.
+     * First two are Yarn intermediary, second two are Optifine lambdas.
+     */
+    @SuppressWarnings({"UnresolvedMixinReference", "InvalidMemberReference"})
+    @Inject(method = {"method_23551", "method_23552", "lambda$new$0", "lambda$new$1"}, at = @At("HEAD"), cancellable = true)
     private static void cancelIfNull(CallbackInfo ci) {
-        if (MinecraftClient.getInstance().gameRenderer == null || MinecraftClient.getInstance().gameRenderer.getLightmapTextureManager() == null) ci.cancel();
+        if (MinecraftClient.getInstance().gameRenderer == null || MinecraftClient.getInstance().gameRenderer.getLightmapTextureManager() == null)
+            ci.cancel();
     }
 }
